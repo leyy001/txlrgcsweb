@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>你的隐藏角色是？</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif; background: #0A0A0A; color: #F5F5F5; min-height: 100vh; }
+    .container { max-width: 680px; margin: 40px auto; padding: 0 20px; }
+    .card { background: #1F1F1F; border-radius: 28px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); padding: 40px 32px; margin-bottom: 24px; }
+    h1 { font-size: 2.9rem; font-weight: 700; text-align: center; background: linear-gradient(90deg, #E8B923, #F5D06E); -webkit-background-clip: text; color: transparent; margin-bottom: 12px; }
+    .subtitle { text-align: center; color: #A0A0A0; font-size: 1.15rem; margin-bottom: 48px; }
+    .btn-start { display: block; margin: 40px auto; padding: 18px 72px; font-size: 1.4rem; font-weight: 600; background: linear-gradient(90deg, #E8B923, #F5D06E); color: #111; border: none; border-radius: 9999px; cursor: pointer; box-shadow: 0 10px 25px rgba(232, 185, 35, 0.4); }
+    .btn-start:active { transform: scale(0.96); }
+    .progress { height: 6px; background: #2A2A2A; border-radius: 9999px; overflow: hidden; margin: 28px 0; }
+    .progress-bar { height: 100%; background: linear-gradient(90deg, #E8B923, #F5D06E); width: 0%; transition: width 0.4s ease; }
+    .question { font-size: 1.45rem; font-weight: 500; margin-bottom: 32px; line-height: 1.45; }
+    .option { display: block; padding: 20px 26px; margin: 14px 0; background: #2A2A2A; border-radius: 22px; cursor: pointer; font-size: 1.12rem; transition: all 0.3s; border: 2px solid transparent; }
+    .option:hover { background: #353535; }
+    .option.selected { background: #2A2A2A; border-color: #E8B923; }
+    .multi-label { color: #E8B923; font-size: 0.95rem; margin-left: 10px; }
+    .result-title { font-size: 2.7rem; font-weight: 700; text-align: center; background: linear-gradient(90deg, #E8B923, #F5D06E); -webkit-background-clip: text; color: transparent; margin: 20px 0; }
+    .meme-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 20px; margin: 20px 0 28px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .report-section h3 { color: #E8B923; margin: 24px 0 12px; font-size: 1.25rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+    <!-- 首页 -->
+    <div id="landing">
+        <div class="card">
+            <h1>你的隐藏角色是？</h1>
+            <p class="subtitle">36道真实生活题 · 甄嬛传恶搞锐评<br>测完立刻知道你藏着的那个角色</p>
+            <button onclick="startTest()" class="btn-start">立即开始测试</button>
+        </div>
+    </div>
+
+    <!-- 测试页 -->
+    <div id="test" style="display:none;">
+        <div class="card">
+            <div class="progress"><div id="progressBar" class="progress-bar"></div></div>
+            <div id="questionNum" style="text-align:right; color:#A0A0A0; font-size:1rem;"></div>
+            <div id="questionText" class="question"></div>
+            <div id="options"></div>
+            <div style="margin-top:40px; display:flex; gap:16px;">
+                <button onclick="prevQuestion()" style="flex:1; padding:18px; background:#2A2A2A; border:none; border-radius:9999px; color:#F5F5F5;">上一题</button>
+                <button onclick="nextQuestion()" style="flex:1; padding:18px; background:linear-gradient(90deg,#E8B923,#F5D06E); border:none; border-radius:9999px; color:#111; font-weight:600;">下一题</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 结果页 -->
+    <div id="result" style="display:none;">
+        <div class="card">
+            <div id="resultContent"></div>
+            <button onclick="restartTest()" style="margin-top:40px; width:100%; padding:20px; background:linear-gradient(90deg,#E8B923,#F5D06E); border:none; border-radius:9999px; color:#111; font-weight:600;">重新测试</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== 完整36道题目 ====================
+const questions = [ /* 36道题目数组保持不变，与之前完全相同 */ 
+    { q: "遇到一个让你心动的男人，你第一反应是？", options: ["直接上去搭讪或加微信", "先偷偷观察他一段时间", "等他先有动作再回应", "在心里反复想但什么都不做"], multi: false },
+    { q: "在床上你最享受的时刻是？（多选）", options: ["自己完全主导节奏", "双方互相争夺主动权", "完全被对方掌控和征服", "漫长的前戏和氛围"], multi: true },
+    { q: "朋友聚会时，你最常扮演什么角色？", options: ["组织者，大家都听我的", "气氛担当，负责活跃聊天", "安静听大家说话，偶尔插话", "拍照记录的那个"], multi: false },
+    { q: "当伴侣说需要空间时，你内心真实想法是？", options: ["觉得他要分手了，马上追问", "表面不在乎，其实很难受", "给他空间，自己也去做自己的事", "认真反思是不是自己太黏了"], multi: false },
+    { q: "关于自己的性取向，你更倾向于？", options: ["高调公开，无所谓别人怎么看", "朋友知道就行，家人不需要知道", "低调生活，不主动说也不刻意藏", "很怕别人知道，尽量活得像直男"], multi: false },
+    { q: "看到两个很帅的男人接吻，你的真实反应是？", options: ["羡慕，觉得自己也要找到这种", "兴奋，觉得画面很刺激", "觉得很正常，没什么特别感觉", "有点害羞，但又忍不住多看两眼"], multi: false },
+    { q: "和新认识的男人聊天，你最常聊什么？", options: ["直接问他想不想要", "聊兴趣爱好慢慢培养感觉", "听他讲，自己很少主动说", "聊工作生活，避开敏感话题"], multi: false },
+    { q: "分手后你通常需要多久才能走出来？", options: ["很快，马上找下一个", "一两个月偶尔还是会想", "好几个月很难彻底放下", "好久好久甚至怀疑自己"], multi: false },
+    { q: "你觉得自己在同志圈里属于？", options: ["比较抢手的那一类", "朋友很多但不一定受欢迎", "存在感一般", "比较边缘不太会经营圈子"], multi: false },
+    { q: "对方在床上叫你‘爸爸’的时候，你会？", options: ["很兴奋更带劲了", "觉得有点尴尬但能接受", "没什么感觉继续", "感觉怪怪的有点出戏"], multi: false },
+    { q: "你最不能接受另一半的哪一点？", options: ["太黏人没有个人空间", "太花心看谁都想撩", "太冷淡没有激情", "太闷骚什么都不肯说"], multi: false },
+    { q: "参加同志派对时，你一般会？", options: ["成为全场焦点玩到最后", "找几个熟人一起玩得很嗨", "安静坐在角落观察大家", "早早到场早早离开"], multi: false },
+    { q: "当你暗恋一个人的时候，你会？", options: ["直接表白不想浪费时间", "疯狂暗示希望他懂", "默默喜欢很久都不敢说", "假装对他没兴趣"], multi: false },
+    { q: "你最喜欢的身体接触方式是？", options: ["激烈粗暴一点的", "热情又温柔的", "轻柔细腻的", "其实不太喜欢太多肢体接触"], multi: false },
+    { q: "你觉得自己最大的优点是？", options: ["敢爱敢恨从不扭捏", "会照顾人很会哄人开心", "性格温和很少跟人吵架", "心思细腻能察觉对方情绪"], multi: false },
+    { q: "看到前任找了新对象，你会？", options: ["觉得无所谓甚至祝福", "表面无所谓心里不爽", "难过但很快就过去", "心里堵很久影响心情"], multi: false },
+    { q: "在性方面，你比较在意的点是？", options: ["自己能不能满足对方", "双方能不能同步高潮", "整个过程有没有仪式感", "安全和卫生最重要"], multi: false },
+    { q: "假如能重来一次，你最想改变自己的是？", options: ["更主动一点大胆一点", "少花一点时间在感情上", "学会爱自己多一点", "不要那么敏感神经别那么细"], multi: false },
+    { q: "你最讨厌别人用什么词形容你？", options: ["娘", "闷骚", "好人卡", "玻璃心"], multi: false },
+    { q: "遇到喜欢的人主动追你，你会？", options: ["很享受被追的感觉", "有点慌不知道怎么回应", "觉得理所当然", "反而开始挑对方的毛病"], multi: false },
+    { q: "你在朋友圈发自拍的频率是？", options: ["经常发各种角度都要来一张", "偶尔发但一定会精修", "很少发除非特别好看的", "几乎不发自拍"], multi: false },
+    { q: "当伴侣提出开放关系时，你的第一反应是？", options: ["同意觉得很刺激", "有点犹豫但可以商量", "完全不能接受", "表面同意心里其实很受伤"], multi: false },
+    { q: "你最常被朋友吐槽的是？", options: ["太强势什么都要听你的", "太情绪化说翻脸就翻脸", "太没主见老好人", "太敏感一点点事就想很多"], multi: false },
+    { q: "去三温暖或桑拿的时候，你通常会？", options: ["主动出击玩得很开", "看看氛围合适再行动", "主要是去泡澡放松的", "觉得很紧张几乎不碰别人"], multi: false },
+    { q: "你觉得‘Gay味’这个词？", options: ["很讨厌不想被贴标签", "无所谓随便别人怎么说", "有点排斥但能接受", "觉得这是属于自己的特质"], multi: false },
+    { q: "跟直男朋友相处时，你会？", options: ["完全不提自己是gay", "偶尔开玩笑但不过界", "很自然地聊同志话题", "反而刻意表现得很man"], multi: false },
+    { q: "你最向往的感情状态是？", options: ["激情四射每天都像热恋", "平稳舒服互相陪伴", "各自独立偶尔甜蜜", "灵魂伴侣式的深度连接"], multi: false },
+    { q: "如果可以选择，你希望自己：", options: ["更骚一点更敢玩", "更会谈恋爱更专一", "更man一点少一点gay味", "更勇敢一点敢出柜"], multi: false },
+    { q: "你最怕别人知道你哪件事？", options: ["其实很缺爱很容易动心", "曾经偷偷谈过很多次", "其实没什么性经验", "很怕老怕变丑"], multi: false },
+    { q: "当你被甩的时候，你最常做的事是？", options: ["疯狂健身报复性提升自己", "疯狂买东西吃东西发泄", "把自己关起来谁都不想见", "疯狂分析到底哪里出了问题"], multi: false },
+    { q: "你觉得自己攻受定位是？", options: ["Top", "Versatile（0.5）", "Bottom", "不太关心攻受只看感觉"], multi: false },
+    { q: "你最容易对哪种男人心动？", options: ["比自己更强势更man的", "跟自己差不多类型的", "比自己小很多乖乖的", "温柔体贴会照顾人的"], multi: false },
+    { q: "你在感情里最常犯的错误是？", options: ["太强势想完全掌控对方", "太善变容易三分钟热度", "太被动一直等对方主动", "太敏感总是胡思乱想"], multi: false },
+    { q: "别人夸你长得帅的时候，你会？", options: ["很得意觉得理所当然", "表面谦虚心里其实很爽", "觉得不好意思不太敢信", "觉得对方只是客气"], multi: false },
+    { q: "你最想在另一半身上得到的特质是？", options: ["忠诚", "激情", "安定感", "理解我"], multi: false },
+    { q: "假如让你用一句话形容自己，你会说？", options: ["我就是个敢爱敢恨的直来直去的人", "我看起来很拽其实很怕受伤", "我很温柔但我需要被保护", "我表面很平静其实内心戏特别多"], multi: false }
+];
+
+// ==================== 8种人格名称 ====================
+const types = ["华妃","甄嬛","沈眉庄","安陵容","敬妃","端妃","淳贵人","纯元皇后"];
+
+// ==================== 8份完整报告（已移除重复标题） ====================
+const reports = {
+    "华妃": `<img src="1-huafi.png" class="meme-img" alt="华妃"><div class="report-section"><h3>核心性格</h3><p>气场两米八，掌控欲极强，后宫C位女王。表面霸道强势，其实内心极度需要被崇拜和认可。</p></div><div class="report-section"><h3>感情表现</h3><p>谈恋爱就是“朕的男人必须听朕的”，占有欲爆棚，吃醋吃到天荒地老。</p></div><div class="report-section"><h3>致命缺点</h3><p>太爱掌控，一言不合就想“杖毙”，容易把对方吓跑。</p></div><div class="report-section"><h3>床上风格</h3><p>霸道女王攻，喜欢把人按在墙上说“你是朕的”。</p></div><div class="report-section"><h3>兼容类型</h3><p>最配：淳贵人（乖乖听话）<br>最不配：甄嬛（斗不过）</p></div><div class="report-section"><h3>成长建议</h3><p>娘娘，偶尔也放手让对方喘口气吧，霸道也要留条活路啊！</p></div>`,
+
+    "甄嬛": `<img src="2-zhenhuan.png" class="meme-img" alt="甄嬛"><div class="report-section"><h3>核心性格</h3><p>表面纯纯小白花，实际心机拉满的绿茶本茶。聪明、能言善辩，永远在布局。</p></div><div class="report-section"><h3>感情表现</h3><p>嘴甜得要命，一句“臣妾惶恐”就能把人拿捏得死死的，前期温柔后期黑化。</p></div><div class="report-section"><h3>致命缺点</h3><p>黑化起来连自己都怕，典型的“前期白莲，后期黑莲”。</p></div><div class="report-section"><h3>床上风格</h3><p>技术流+话痨流，边做边夸“你好棒哦～”。</p></div><div class="report-section"><h3>兼容类型</h3><p>最配：端妃（硬核好骗）<br>最不配：华妃（斗不过）</p></div><div class="report-section"><h3>成长建议</h3><p>姐妹，别老想着借刀杀人，有时候真心比心机更管用，懂？</p></div>`,
+
+    "沈眉庄": `<img src="3-shenmeizhuang.png" class="meme-img" alt="沈眉庄"><div class="report-section"><h3>核心性格</h3><p>温柔体贴、忠诚暖心的大姐姐型，永远在为别人着想。</p></div><div class="report-section"><h3>感情表现</h3><p>超级会照顾人，结果别人都觉得“你像我姐”，容易好人卡。</p></div><div class="report-section"><h3>致命缺点</h3><p>太善良了，被人卖了还帮人数钱。</p></div><div class="report-section"><h3>床上风格</h3><p>温柔体贴型，喜欢把对方照顾得舒舒服服。</p></div><div class="report-section"><h3>兼容类型</h3><p>最配：纯元皇后（互相守护）<br>最不配：安陵容（太善良会被玩死）</p></div><div class="report-section"><h3>成长建议</h3><p>姐，醒醒吧！好人做多了是要吃亏的，偶尔也要狠一点啊！</p></div>`,
+
+    "安陵容": `<img src="4-anlingrong.png" class="meme-img" alt="安陵容"><div class="report-section"><h3>核心性格</h3><p>表面乖巧柔弱，内心反差极大、隐忍黑化王者。</p></div><div class="report-section"><h3>感情表现</h3><p>前期小白兔，后期直接变狼，忍到极限就是核弹。</p></div><div class="report-section"><h3>致命缺点</h3><p>反差太大，表面“我好开心”，背后小本本已经记满。</p></div><div class="report-section"><h3>床上风格</h3><p>表面害羞，实际反差M到飞起，喜欢被“欺负”。</p></div><div class="report-section"><h3>兼容类型</h3><p>最配：华妃（互相伤害）<br>最不配：沈眉庄（太善良会被玩死）</p></div><div class="report-section"><h3>成长建议</h3><p>别老忍着了，姐妹，憋久了真的会黑化的！</p></div>`,
+
+    "敬妃": `<img src="5-jingfei.png" class="meme-img" alt="敬妃"><div class="report-section"><h3>核心性格</h3><p>心思细腻、观察力极强、低调王者。</p></div><div class="report-section"><h3>感情表现</h3><p>超级会察言观色，但自己很少主动表达。</p></div><div class="report-section"><h3>致命缺点</h3><p>太细腻了，容易玻璃心，一点点事就想很多。</p></div><div class="report-section"><h3>床上风格</h3><p>细腻温柔流，喜欢慢慢来，氛围感和仪式感拉满。</p></div><div class="report-section"><h3>兼容类型</h3><p>最配：纯元皇后（互相理解）<br>最不配：华妃（被吼到自闭）</p></div><div class="report-section"><h3>成长建议</h3><p>别老观察了，偶尔也大胆说出来吧，憋着容易内伤！</p></div>`,
+
+    "端妃": `<img src="6-duanfei.png" class="meme-img" alt="端妃"><div class="report-section"><h3>核心性格</h3><p>外表硬朗沉稳、内心坚韧的硬核直男型。</p></div><div class="report-section"><h3>感情表现</h3><p>不爱说甜言蜜语，但行动永远最硬核。</p></div><div class="report-section"><h3>致命缺点</h3><p>太直了，有时候情商为负。</p></div><div class="report-section"><h3>床上风格</h3><p>纯力量型，霸道又持久。</p></div><div class="report-section"><h3>兼容类型</h3><p>最配：甄嬛（互相制衡）<br>最不配：安陵容（会被玩死）</p></div><div class="report-section"><h3>成长建议</h3><p>硬汉也要学着撒娇，不然真的会单身到老啊！</p></div>`,
+
+    "淳贵人": `<img src="7-chunguiren.png" class="meme-img" alt="淳贵人"><div class="report-section"><h3>核心性格</h3><p>天真烂漫、无拘无束的傻白甜。</p></div><div class="report-section"><h3>感情表现</h3><p>爱得轰轰烈烈，但容易被套路。</p></div><div class="report-section"><h3>致命缺点</h3><p>太单纯了，被卖了还帮人数钱。</p></div><div class="report-section"><h3>床上风格</h3><p>热情奔放型，玩得特别开。</p></div><div class="report-section"><h3>兼容类型</h3><p>最配：华妃（被管着反而开心）<br>最不配：甄嬛（斗不过）</p></div><div class="report-section"><h3>成长建议</h3><p>姐妹，醒醒吧！这个世界没那么单纯的！</p></div>`,
+
+    "纯元皇后": `<img src="8-chunyuan.png" class="meme-img" alt="纯元皇后"><div class="report-section"><h3>核心性格</h3><p>温柔稳重、让人安心依赖的白月光。</p></div><div class="report-section"><h3>感情表现</h3><p>永远是别人心中的完美存在。</p></div><div class="report-section"><h3>致命缺点</h3><p>太完美了，容易被拿来当对比。</p></div><div class="report-section"><h3>床上风格</h3><p>温柔治愈型，感觉像被全心全意宠爱。</p></div><div class="report-section"><h3>兼容类型</h3><p>最配：所有人（但大家都觉得配不上你）</p></div><div class="report-section"><h3>成长建议</h3><p>皇后娘娘，偶尔也让自己任性一点吧，别老当大家的白月光了！</p></div>`
+};
+
+let currentQuestion = 0;
+let answers = new Array(questions.length).fill(null);
+
+function startTest() {
+    document.getElementById('landing').style.display = 'none';
+    document.getElementById('test').style.display = 'block';
+    currentQuestion = 0;
+    loadQuestion();
+}
+
+function loadQuestion() {
+    const q = questions[currentQuestion];
+    document.getElementById('questionNum').innerHTML = `第 ${currentQuestion+1}/36 题`;
+    document.getElementById('questionText').innerHTML = q.q + (q.multi ? ' <span class="multi-label">（多选）</span>' : '');
+    const optsDiv = document.getElementById('options');
+    optsDiv.innerHTML = '';
+    q.options.forEach((opt, i) => {
+        const div = document.createElement('div');
+        div.className = 'option';
+        div.textContent = opt;
+        if (q.multi) {
+            div.onclick = () => toggleSelect(i, div);
+        } else {
+            div.onclick = () => singleSelect(i, div);
+        }
+        optsDiv.appendChild(div);
+    });
+    updateProgress();
+}
+
+function singleSelect(index, el) {
+    document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    answers[currentQuestion] = [index];
+}
+
+function toggleSelect(index, el) {
+    el.classList.toggle('selected');
+    if (!answers[currentQuestion]) answers[currentQuestion] = [];
+    if (answers[currentQuestion].includes(index)) {
+        answers[currentQuestion] = answers[currentQuestion].filter(i => i !== index);
+    } else {
+        answers[currentQuestion].push(index);
+    }
+}
+
+function updateProgress() {
+    const percent = Math.round(((currentQuestion + 1) / 36) * 100);
+    document.getElementById('progressBar').style.width = percent + '%';
+}
+
+function nextQuestion() {
+    if (currentQuestion < 35) {
+        currentQuestion++;
+        loadQuestion();
+    } else {
+        showResult();
+    }
+}
+
+function prevQuestion() {
+    if (currentQuestion > 0) {
+        currentQuestion--;
+        loadQuestion();
+    }
+}
+
+function calculateScores() {
+    let scores = new Array(8).fill(0);
+    answers.forEach((ans, i) => {
+        if (ans) ans.forEach(choice => { scores[choice % 8] += 2.5; });
+    });
+    const total = scores.reduce((a,b)=>a+b,0) || 1;
+    return scores.map(s => Math.round((s / total) * 100));
+}
+
+function showResult() {
+    document.getElementById('test').style.display = 'none';
+    document.getElementById('result').style.display = 'block';
+    const percentages = calculateScores();
+    const maxIndex = percentages.indexOf(Math.max(...percentages));
+    const mainType = types[maxIndex];
+    let html = `<h2 class="result-title">${mainType}</h2>`;
+    html += reports[mainType] || "<p>报告生成中...</p>";
+    document.getElementById('resultContent').innerHTML = html;
+}
+
+function restartTest() {
+    location.reload();
+}
+</script>
+</body>
+</html>
